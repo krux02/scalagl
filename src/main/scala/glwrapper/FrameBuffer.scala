@@ -20,13 +20,14 @@ object FrameBuffer {
   val MaxColorAttachments = GL11.glGetInteger(GL_MAX_COLOR_ATTACHMENTS)
 
   lazy val statusString = Map(
-    GL_FRAMEBUFFER_UNDEFINED -> "undefined",
-    GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT ->  "incomplete attachment",
+    GL_FRAMEBUFFER_COMPLETE                      -> "complete",
+    GL_FRAMEBUFFER_UNDEFINED                     -> "undefined",
+    GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT         -> "incomplete attachment",
     GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT -> "incomplete missing attachment",
-    GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER -> "incomplete draw buffer",
-    GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER -> "incomplete read buffer",
-    GL_FRAMEBUFFER_UNSUPPORTED -> "unsupported",
-    GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE -> "incomplete multisample",
+    GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER        -> "incomplete draw buffer",
+    GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER        -> "incomplete read buffer",
+    GL_FRAMEBUFFER_UNSUPPORTED                   -> "unsupported",
+    GL_FRAMEBUFFER_INCOMPLETE_MULTISAMPLE        -> "incomplete multisample",
     GL32.GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS -> "incomplete layer targets"
   )
 }
