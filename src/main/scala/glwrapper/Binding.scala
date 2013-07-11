@@ -80,6 +80,11 @@ abstract class Binding( val program:Program ) extends AddString {
   def uniformVec3f(name:String) = uniforms.collect{ case uf:UniformVec3f if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Vec3f](program,this,name))
   def uniformVec4f(name:String) = uniforms.collect{ case uf:UniformVec4f if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Vec4f](program,this,name))
   def uniformMat4f(name:String) = uniforms.collect{ case uf:UniformMat4f if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Mat4f](program,this,name))
+  def uniformSampler1D(name:String) = uniforms.collect{ case uf:UniformSampler1D if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture1D](program,this,name))
+  def uniformSampler1DArray(name:String) = uniforms.collect{ case uf:UniformSampler1DArray if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture1DArray](program,this,name))
   def uniformSampler2D(name:String) = uniforms.collect{ case uf:UniformSampler2D if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2D](program,this,name))
+  def uniformSampler2DArray(name:String) = uniforms.collect{ case uf:UniformSampler2DArray if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2DArray](program,this,name))
+  def uniformSampler3D(name:String) = uniforms.collect{ case uf:UniformSampler3D if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2D](program,this,name))
+  def uniformSampler2DRect(name:String) = uniforms.collect{ case uf:UniformSampler2DRect if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2DRect](program,this,name))
   def uniformSamplerCube(name:String) = uniforms.collect{ case uf:UniformSamplerCube if uf.name == name => uf }.headOption.getOrElse(new UniformFake[TextureCube](program,this,name))
 }
