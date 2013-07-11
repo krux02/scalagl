@@ -12,6 +12,7 @@ import org.lwjgl.BufferUtils
 import simplex3d.math.floatx._
 
 import glwrapper.util.{putMat4f, sharedFloatBuffer}
+import simplex3d.math._
 
 class UniformConfig(
   val program:Program,
@@ -51,6 +52,10 @@ object Uniform {
         case GL_FLOAT_VEC3 => new UniformVec3f(config)
         case GL_FLOAT_VEC4 => new UniformVec4f(config)
         case GL_FLOAT_MAT4 => new UniformMat4f(config)
+        case GL_BOOL => new UniformBool(config)
+        case GL_BOOL_VEC2 => new UniformBool(config)
+        case GL_BOOL_VEC3 => new UniformBool(config)
+        case GL_BOOL_VEC4 => new UniformBool(config)
         case _ => throw new NotImplementedError("currently not supported uniform type: "+Program.shaderTypeString(ttype) )
     }
   }
@@ -93,22 +98,120 @@ class UniformFake[T](program:Program, binding:Binding, _name:String) extends Uni
     sb append "unbound uniform " append name
 }
 
-class UniformVec4f(config:UniformConfig) extends Uniform[ReadVec4f](config) {
-  private[this] val data = Vec4f(0)
+class UniformBool(config:UniformConfig) extends Uniform[Boolean](config) {
+  private[this] var data = false
 
-  def :=(v:ReadVec4f) {
+  def :=(v:Boolean) {
+    data = v
+    binding.changedUniforms.enqueue(this)
+  }
+
+  def get = {
+    val data = glwrapper.util.sharedIntBuffer(1)
+    glGetUniform(program.id, location, data) != 0
+  }
+
+  def writeData() {
+    glUniform1ui(location, if(data) 1 else 0)
+  }
+}
+
+
+class UniformVec2b(config:UniformConfig) extends Uniform[ReadVec2b](config) {
+  private[this] val data = Vec2b(false)
+
+  def :=(v:ReadVec2b) {
     data := v
     binding.changedUniforms.enqueue(this)
   }
 
   def get = {
-    val data = sharedFloatBuffer(4)
+    val data = glwrapper.util.sharedIntBuffer(2)
     glGetUniform(program.id, location, data)
-    ConstVec4f(data get 0, data get 1, data get 2, data get 3)
+    ConstVec2b( (data get 0) != 0, (data get 1) != 0)
   }
 
   def writeData() {
-    glUniform4f(location, data.x.toFloat, data.y.toFloat, data.z.toFloat, data.w.toFloat)
+    glUniform2ui(location, if(data.x) 1 else 0, if(data.y) 1 else 0)
+  }
+}
+
+class UniformVec3b(config:UniformConfig) extends Uniform[ReadVec3b](config) {
+
+  private[this] val data = Vec3b(false)
+
+  def :=(v:ReadVec3b) {
+    data := v
+    binding.changedUniforms.enqueue(this)
+  }
+
+  def get = {
+    val data = glwrapper.util.sharedIntBuffer(3)
+    glGetUniform(program.id, location, data)
+    ConstVec3b( (data get 0) != 0, (data get 1) != 0, (data get 2) != 0)
+  }
+
+  def writeData() {
+    glUniform3ui(location, if(data.x) 1 else 0, if(data.y) 1 else 0, if(data.z) 1 else 0)
+  }
+}
+
+class UniformVec4b(config:UniformConfig) extends Uniform[ReadVec4b](config) {
+  private[this] val data = Vec4b(false)
+
+  def :=(v:ReadVec4b) {
+    data := v
+    binding.changedUniforms.enqueue(this)
+  }
+
+  def get = {
+    val data = glwrapper.util.sharedIntBuffer(4)
+    glGetUniform(program.id, location, data)
+    ConstVec4b( (data get 0) != 0, (data get 1) != 0, (data get 2) != 0, (data get 3) != 0)
+  }
+
+  def writeData() {
+    glUniform4ui(location, if(data.x) 1 else 0, if(data.y) 1 else 0, if(data.z) 1 else 0, if(data.w) 1 else 0)
+  }
+}
+
+
+
+class UniformFloat(config:UniformConfig) extends Uniform[Float](config) {
+  private[this] var data:Float = 0
+
+  def :=(v:Float) {
+    data = v
+    binding.changedUniforms.enqueue(this)
+  }
+
+  def get = {
+    val data = sharedFloatBuffer(1)
+    glGetUniform(program.id, location, data)
+    data get 0
+  }
+
+  def writeData() {
+    glUniform1f(location, data)
+  }
+}
+
+class UniformVec2f(config:UniformConfig) extends Uniform[ReadVec2f](config) {
+  private[this] val data = Vec2f(0)
+
+  def :=(v:ReadVec2f) {
+    data := v
+    binding.changedUniforms.enqueue(this)
+  }
+
+  def get = {
+    val data = sharedFloatBuffer(2)
+    glGetUniform(program.id, location, data)
+    ConstVec2f(data get 0, data get 1)
+  }
+
+  def writeData() {
+    glUniform2f(location, data.x, data.y)
   }
 }
 
@@ -132,41 +235,22 @@ class UniformVec3f(config:UniformConfig) extends Uniform[ReadVec3f](config) {
   }
 }
 
-class UniformVec2f(config:UniformConfig) extends Uniform[ReadVec2f](config) {
-  private[this] val data = Vec2f(0)
+class UniformVec4f(config:UniformConfig) extends Uniform[ReadVec4f](config) {
+  private[this] val data = Vec4f(0)
 
-  def :=(v:ReadVec2f) {
+  def :=(v:ReadVec4f) {
     data := v
     binding.changedUniforms.enqueue(this)
   }
 
   def get = {
-    val data = sharedFloatBuffer(2)
+    val data = sharedFloatBuffer(4)
     glGetUniform(program.id, location, data)
-    ConstVec2f(data get 0, data get 1)
+    ConstVec4f(data get 0, data get 1, data get 2, data get 3)
   }
 
   def writeData() {
-    glUniform2f(location, data.x, data.y)
-  }
-}
-
-class UniformFloat(config:UniformConfig) extends Uniform[Float](config) {
-  private[this] var data:Float = 0
-
-  def :=(v:Float) {
-    data = v
-    binding.changedUniforms.enqueue(this)
-  }
-
-  def get = {
-    val data = sharedFloatBuffer(1)
-    glGetUniform(program.id, location, data)
-    data get 0
-  }
-
-  def writeData() {
-    glUniform1f(location, data)
+    glUniform4f(location, data.x.toFloat, data.y.toFloat, data.z.toFloat, data.w.toFloat)
   }
 }
 

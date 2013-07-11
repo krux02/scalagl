@@ -85,6 +85,6 @@ abstract class Binding( val program:Program ) extends AddString {
   def uniformSampler2D(name:String) = uniforms.collect{ case uf:UniformSampler2D if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2D](program,this,name))
   def uniformSampler2DArray(name:String) = uniforms.collect{ case uf:UniformSampler2DArray if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2DArray](program,this,name))
   def uniformSampler3D(name:String) = uniforms.collect{ case uf:UniformSampler3D if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2D](program,this,name))
-  def uniformSampler2DRect(name:String) = uniforms.collect{ case uf:UniformSampler2DRect if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Texture2DRect](program,this,name))
+  def uniformSampler2DRect(name:String) = uniforms.collect{ case uf:UniformSampler2DRect if uf.name == name => uf }.headOption.getOrElse(new UniformFake[TextureRectangle](program,this,name))
   def uniformSamplerCube(name:String) = uniforms.collect{ case uf:UniformSamplerCube if uf.name == name => uf }.headOption.getOrElse(new UniformFake[TextureCube](program,this,name))
 }

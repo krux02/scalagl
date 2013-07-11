@@ -17,7 +17,7 @@ import org.lwjgl.opengl.ARBInstancedArrays._
 
 
 case class BufferBinding(buffer:GlBuffer, size:Int, glType:Int, normalized:Boolean, stride:Int, offset:Int) {
-  require( size == 1 || size == 2 || size == 3 || size == 4 || size == GL_BGRA )
+  require( size == 1 || size == 2 || size == 3 || size == 4 )
   require( stride > 0 )
 
   override def toString = {
@@ -26,38 +26,38 @@ case class BufferBinding(buffer:GlBuffer, size:Int, glType:Int, normalized:Boole
 }
 
 object Attribute {
-  def apply(program:Program, binding:Binding, name:String, location:Int, size:Int, ttype:Int) = {
+  def apply(program:Program, binding:Binding, name:String, location:Int, size:Int, ttype:Int):Attribute[_] = {
 
 
     if( size != 1 ) {
       throw new NotImplementedError("currently not supported attribute size: "+size)
     }
 
-    val bufferBinding = new BufferBinding(
-        buffer = new ArrayBuffer() create(),
-        size = ttype match {
-          case GL_FLOAT | GL_INT => 1
-          case GL_FLOAT_VEC2 => 2
-          case GL_FLOAT_VEC3 => 3
-          case GL_FLOAT_VEC4 => 4
-          case _ => ??? // TODO implement other types
-        },
-        glType = ttype match {
-          case GL_FLOAT => GL_FLOAT
-          case GL_FLOAT_VEC2 => GL_FLOAT
-          case GL_FLOAT_VEC3 => GL_FLOAT
-          case GL_FLOAT_VEC4 => GL_FLOAT
-          case _ => ttype // TODO implement other types
-        },
-        normalized = false,
-        stride = size * ttype match {
-          case GL_FLOAT | GL_INT => 4
-          case GL_FLOAT_VEC2 => 8
-          case GL_FLOAT_VEC3 => 12
-          case GL_FLOAT_VEC4 => 16
-        },
-        offset = 0
-    )
+    val bufferBinding = {
+      val buffer = (new ArrayBuffer).create()
+
+      val size = ttype match {
+        case GL_FLOAT      | GL_INT      | GL_BOOL       => 1
+        case GL_FLOAT_VEC2 | GL_INT_VEC2 | GL_BOOL_VEC2 => 2
+        case GL_FLOAT_VEC3 | GL_INT_VEC3 | GL_BOOL_VEC3 => 3
+        case GL_FLOAT_VEC4 | GL_INT_VEC4 | GL_BOOL_VEC4 => 4
+        // TODO implement other types
+      }
+
+      val glType = ttype match {
+        case GL_FLOAT | GL_FLOAT_VEC2  | GL_FLOAT_VEC3  | GL_FLOAT_VEC4 => GL_FLOAT
+        case GL_INT   | GL_INT_VEC2    | GL_INT_VEC3    | GL_INT_VEC4   => GL_INT
+        case GL_BOOL  | GL_BOOL_VEC2   | GL_BOOL_VEC3   | GL_BOOL_VEC4  => GL_BOOL
+        // TODO implement other types
+      }
+
+      val stride = size * (glType match {
+        case GL_FLOAT | GL_INT  => 4
+        case GL_BOOL  => 1
+      })
+
+      BufferBinding(buffer, size, glType, false, stride, 0)
+    }
 
     ttype match {
       case GL_FLOAT =>
@@ -68,6 +68,10 @@ object Attribute {
         new AttributeVec3f(program, binding, name, location, bufferBinding)
       case GL_FLOAT_VEC4 =>
         new AttributeVec4f(program, binding, name, location, bufferBinding)
+      case GL_INT =>
+        new AttributeInt(program, binding, name, location, bufferBinding)
+      case GL_BOOL =>
+        new AttributeBool(program, binding, name, location, bufferBinding)
       case _ =>
         throw new NotImplementedError("currently not supported attribute type: "+Program.shaderTypeString(ttype) )
     }
@@ -210,6 +214,33 @@ class AttributeFloat(val program:Program, val binding:Binding, val name:CharSequ
     }
 
     for(i <- 0 until size) yield data.getFloat(offset + i*stride + 0)
+  }
+}
+
+class AttributeBool(val program:Program, val binding:Binding, val name:CharSequence, val location:Int, val bufferBinding:BufferBinding) extends Attribute[Boolean](size = 1, glType = GL_BOOL) {
+  def := (seq:Seq[Boolean]) {
+    val data = sharedByteBuffer(bufferBinding.stride * seq.size)
+
+    for( (v,i) <- seq.zipWithIndex ) {
+      import bufferBinding.{offset,stride}
+      data.put(offset + i*stride + 0, if(v) 1 else 0)
+    }
+
+    bufferBinding.buffer.bind {
+      bufferBinding.buffer.putData( data )
+    }
+  }
+
+  def read(size:Int) = {
+    import bufferBinding.{offset,stride}
+
+    val data = sharedByteBuffer(size * stride)
+
+    bufferBinding.buffer.bind {
+      bufferBinding.buffer.getData(data)
+    }
+
+    for(i <- 0 until size) yield data.get(offset + i*stride + 0) != 0
   }
 }
 
