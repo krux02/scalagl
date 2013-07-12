@@ -232,7 +232,7 @@ class Program(val name:String) { program =>
     val numAttributes = glGetProgrami(id, GL_ACTIVE_ATTRIBUTES)
     val sizetypeBuffer = BufferUtils.createIntBuffer(2)
 
-    var currentSampler = 0
+    var currentSampler = 1
     val nextSampler: () => Int = () => {currentSampler += 1; currentSampler-1}
 
     new Binding(program) { binding =>

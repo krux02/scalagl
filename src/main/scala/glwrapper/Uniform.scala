@@ -13,6 +13,7 @@ import simplex3d.math.floatx._
 
 import glwrapper.util.{putMat4f, sharedFloatBuffer}
 import simplex3d.math._
+import simplex3d.math.types.AnyVec
 
 class UniformConfig(
   val program:Program,
@@ -61,7 +62,6 @@ object Uniform {
   }
 }
 
-
 abstract class Uniform[T](config:UniformConfig) extends AddString {
   val program:Program   = config.program
   val binding:Binding   = config.binding
@@ -98,14 +98,16 @@ class UniformFake[T](program:Program, binding:Binding, _name:String) extends Uni
     sb append "unbound uniform " append name
 }
 
-class UniformBool(config:UniformConfig) extends Uniform[Boolean](config) {
-  private[this] var data = false
+abstract class UniformAnyVal[T <: AnyVal](config:UniformConfig) extends Uniform[T](config) {
+  protected var data:T = _
 
-  def :=(v:Boolean) {
+  def :=(v:T) {
     data = v
     binding.changedUniforms.enqueue(this)
   }
+}
 
+class UniformBool(config:UniformConfig) extends UniformAnyVal[Boolean](config) {
   def get = {
     val data = glwrapper.util.sharedIntBuffer(1)
     glGetUniform(program.id, location, data)
@@ -116,7 +118,6 @@ class UniformBool(config:UniformConfig) extends Uniform[Boolean](config) {
     glUniform1ui(location, if(data) 1 else 0)
   }
 }
-
 
 class UniformVec2b(config:UniformConfig) extends Uniform[ReadVec2b](config) {
   private[this] val data = Vec2b(false)
@@ -178,14 +179,7 @@ class UniformVec4b(config:UniformConfig) extends Uniform[ReadVec4b](config) {
 
 
 
-class UniformFloat(config:UniformConfig) extends Uniform[Float](config) {
-  private[this] var data:Float = 0
-
-  def :=(v:Float) {
-    data = v
-    binding.changedUniforms.enqueue(this)
-  }
-
+class UniformFloat(config:UniformConfig) extends UniformAnyVal[Float](config) {
   def get = {
     val data = sharedFloatBuffer(1)
     glGetUniform(program.id, location, data)
@@ -268,6 +262,7 @@ abstract class UniformSampler[T <: Texture](config:UniformConfig) extends Unifor
     glUniform1i(location, position)
     glActiveTexture(GL_TEXTURE0 + position)
     texture.bind()
+    glActiveTexture(GL_TEXTURE0)
   }
 
   def get = ???
