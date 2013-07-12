@@ -76,6 +76,7 @@ abstract class Binding( val program:Program ) extends AddString {
   def attributeVec4f(name:String) = attributes.collect{ case at:AttributeVec4f if at.name == name => at }.headOption.getOrElse(new AttributeFake[Vec4f](program, this, name))
 
   def uniformFloat(name:String) = uniforms.collect{ case uf:UniformFloat if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Float](program,this,name))
+  def uniformBool(name:String)   = uniforms.collect{ case uf:UniformBool if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Boolean](program,this,name))
   def uniformVec2f(name:String) = uniforms.collect{ case uf:UniformVec2f if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Vec2f](program,this,name))
   def uniformVec3f(name:String) = uniforms.collect{ case uf:UniformVec3f if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Vec3f](program,this,name))
   def uniformVec4f(name:String) = uniforms.collect{ case uf:UniformVec4f if uf.name == name => uf }.headOption.getOrElse(new UniformFake[Vec4f](program,this,name))

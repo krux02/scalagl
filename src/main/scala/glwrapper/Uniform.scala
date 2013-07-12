@@ -108,7 +108,8 @@ class UniformBool(config:UniformConfig) extends Uniform[Boolean](config) {
 
   def get = {
     val data = glwrapper.util.sharedIntBuffer(1)
-    glGetUniform(program.id, location, data) != 0
+    glGetUniform(program.id, location, data)
+    data.get(0) != 0
   }
 
   def writeData() {

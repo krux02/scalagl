@@ -6,6 +6,7 @@ import org.lwjgl.opengl.GL11._
 import org.lwjgl.opengl.GL20._
 
 import org.lwjgl.BufferUtils
+import java.io.FileNotFoundException
 
 /**
  * User: arne
@@ -16,15 +17,27 @@ import org.lwjgl.BufferUtils
 object Program {
 
   def auto(name:String) = {
-    val vert = Shader[VertexShader]( getClass.getClassLoader.getResourceAsStream(s"shaders/$name.vsh") )
-    val frag = Shader[FragmentShader]( getClass.getClassLoader.getResourceAsStream(s"shaders/$name.fsh") )
-    val result = apply(name)(vert)(frag)
-    vert.delete()
-    frag.delete()
+    apply(name)(name+".vsh")(name+".fsh")
+  }
+
+  def apply(name:String)(vertexShaderNames: String*)(fragmentShaderNames:String*):Program = {
+
+    def readStream(name:String) = {
+      val stream = getClass.getClassLoader.getResourceAsStream("shaders/" + name )
+      if( stream == null ) throw new FileNotFoundException("shaders/" + name )
+      stream
+    }
+
+    val verts = for( name <- vertexShaderNames ) yield Shader[VertexShader]( readStream(name) )
+    val frags = for( name <- fragmentShaderNames ) yield Shader[FragmentShader]( readStream(name) )
+
+    val result = create(name, verts, frags)
+    verts.foreach( _.delete() )
+    frags.foreach( _.delete() )
     result
   }
 
-  def apply(name:String)(vertexShaders: VertexShader*)(fragmentShaders: FragmentShader*) = {
+  def create(name:String, vertexShaders: Seq[VertexShader], fragmentShaders: Seq[FragmentShader]):Program = {
 
 
     val shaderList = vertexShaders ++ fragmentShaders
