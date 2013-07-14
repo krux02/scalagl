@@ -31,7 +31,10 @@ class UniformConfig(
  */
 
 object Uniform {
-  def apply(program:Program, binding:Binding, name:String, location:Int, ttype:Int, size:Int, nextSampler: () => Int) : Uniform[_] = {
+  var currentSampler = 1
+  val nextSampler: () => Int = () => {currentSampler += 1; currentSampler-1}
+
+  def apply(program:Program, binding:Binding, name:String, location:Int, ttype:Int, size:Int) : Uniform[_] = {
     val config = new UniformConfig(
         program = program,
         binding = binding,
@@ -84,10 +87,9 @@ abstract class Uniform[T](config:UniformConfig) extends AddString {
 
 class UniformFake[T](program:Program, binding:Binding, _name:String) extends Uniform[T](
   new UniformConfig(program, binding, 0, _name, 0, 1)) {
-
   println(this)
 
-  def := (v:T) { }
+  def := (v:T) {}
   def get = null.asInstanceOf[T]
 
   def writeData() {
@@ -98,16 +100,32 @@ class UniformFake[T](program:Program, binding:Binding, _name:String) extends Uni
     sb append "unbound uniform " append name
 }
 
-abstract class UniformAnyVal[T <: AnyVal](config:UniformConfig) extends Uniform[T](config) {
-  protected var data:T = _
+abstract class UniformTest[T](config:UniformConfig)(implicit sd:ShaderData[T]) extends Uniform[T](config) {
+  private[this] var data:T = sd.default
 
-  def :=(v:T) {
-    data = v
+  def :=(value:T) {
+    data = sd.assign(data,value)
     binding.changedUniforms.enqueue(this)
+  }
+
+  def get = {
+    println("no real uniform data")
+    sd.assign( sd.default, data )
+  }
+
+  def writeData {
+    sd.uniform(location, data)
   }
 }
 
-class UniformBool(config:UniformConfig) extends UniformAnyVal[Boolean](config) {
+class UniformBool(config:UniformConfig) extends Uniform[Boolean](config) {
+  private[this] var data = false
+
+  def :=(v:Boolean) {
+    data = v
+    binding.changedUniforms.enqueue(this)
+  }
+
   def get = {
     val data = glwrapper.util.sharedIntBuffer(1)
     glGetUniform(program.id, location, data)
@@ -179,7 +197,14 @@ class UniformVec4b(config:UniformConfig) extends Uniform[ReadVec4b](config) {
 
 
 
-class UniformFloat(config:UniformConfig) extends UniformAnyVal[Float](config) {
+class UniformFloat(config:UniformConfig) extends Uniform[Float](config) {
+  private[this] var data = 0.0f
+
+  def :=(v:Float) {
+    data = v
+    binding.changedUniforms.enqueue(this)
+  }
+
   def get = {
     val data = sharedFloatBuffer(1)
     glGetUniform(program.id, location, data)
@@ -266,7 +291,6 @@ abstract class UniformSampler[T <: Texture](config:UniformConfig) extends Unifor
   }
 
   def get = ???
-
 }
 
 class UniformSampler1D(val position:Int, config:UniformConfig) extends UniformSampler[Texture1D](config)

@@ -232,9 +232,6 @@ class Program(val name:String) { program =>
     val numAttributes = glGetProgrami(id, GL_ACTIVE_ATTRIBUTES)
     val sizetypeBuffer = BufferUtils.createIntBuffer(2)
 
-    var currentSampler = 1
-    val nextSampler: () => Int = () => {currentSampler += 1; currentSampler-1}
-
     new Binding(program) { binding =>
       val attributes =
         for( location <- 0 until numAttributes ) yield {
@@ -250,7 +247,7 @@ class Program(val name:String) { program =>
           val size = sizetypeBuffer.get(0)
           val ttype = sizetypeBuffer.get(1)
           val location = glGetUniformLocation(id, name)
-          Uniform(program, binding, name, location, ttype, size, nextSampler)
+          Uniform(program, binding, name, location, ttype, size)
         }
 
       val transformFeedback:Seq[Attribute[_]] = {

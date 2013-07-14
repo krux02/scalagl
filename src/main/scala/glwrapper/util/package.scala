@@ -9,6 +9,7 @@ import simplex3d.math.floatx._
 
 import simplex3d.math.double._
 import simplex3d.math.doublex._
+import simplex3d.math._
 
 trait AddString {
   override def toString = addString(new StringBuilder).result
@@ -69,52 +70,88 @@ package object util {
     buffer
   }
 
-  def putVec2f( buffer:FloatBuffer, v:Vec2f ) {
-    putVec2f(buffer, v.x, v.y)
+  @inline def putVec2f( buffer:FloatBuffer, v:Vec2f ):Unit = putVec2f(buffer, v.x, v.y)
+  @inline def putVec2f( buffer:FloatBuffer, f1:Float, f2:Float ):Unit = buffer.put(f1).put(f2)
+  @inline def putVec2f( buffer:ByteBuffer, v:Vec2f ):Unit = putVec2f(buffer, v.x, v.y)
+  @inline def putVec2f( buffer:ByteBuffer, f1:Float, f2:Float ):Unit = buffer.putFloat(f1).putFloat(f2)
+  @inline def putVec3f( buffer:FloatBuffer, v:Vec3f ):Unit = putVec3f(buffer, v.x, v.y, v.z)
+  @inline def putVec3f( buffer:FloatBuffer, f1:Float, f2:Float, f3:Float ):Unit = buffer.put(f1).put(f2).put(f3)
+  @inline def putVec3f( buffer:ByteBuffer, v:Vec3f ):Unit = putVec3f(buffer, v.x, v.y, v.z)
+  @inline def putVec3f( buffer:ByteBuffer, f1:Float, f2:Float, f3:Float ):Unit = buffer.putFloat(f1).putFloat(f2).putFloat(f3)
+  @inline def putVec4f( buffer:FloatBuffer, v:Vec4f ):Unit = putVec4f(buffer, v.x, v.y, v.z, v.w)
+  @inline def putVec4f( buffer:FloatBuffer, f1:Float, f2:Float, f3:Float, f4:Float ):Unit = buffer.put(f1).put(f2).put(f3).put(f4)
+  @inline def putVec4f( buffer:ByteBuffer, v:Vec4f ):Unit = putVec4f(buffer, v.x, v.y, v.z, v.w)
+  @inline def putVec4f( buffer:ByteBuffer, f1:Float, f2:Float, f3:Float, f4:Float ): Unit = buffer.putFloat(f1).putFloat(f2).putFloat(f3).putFloat(f4)
+  @inline def getVec4f( buffer:ByteBuffer , v:Vec4f ) = {
+    v.x = buffer.getFloat()
+    v.y = buffer.getFloat()
+    v.z = buffer.getFloat()
+    v.w = buffer.getFloat()
+    v
+  }
+  @inline def getVec3f( buffer:ByteBuffer , v:Vec3f ) = {
+    v.x = buffer.getFloat()
+    v.y = buffer.getFloat()
+    v.z = buffer.getFloat()
+    v
+  }
+  @inline def getVec2f( buffer:ByteBuffer , v:Vec2f ) = {
+    v.x = buffer.getFloat()
+    v.y = buffer.getFloat()
+    v
   }
 
-  def putVec2f( buffer:FloatBuffer, f1:Float, f2:Float ) {
-    buffer.put(f1).put(f2)
+  @inline def putVec2i( buffer:ByteBuffer, v:Vec2i ):Unit = putVec2f(buffer, v.x, v.y)
+  @inline def putVec2i( buffer:ByteBuffer, i1:Int, i2:Int ):Unit = buffer.putInt(i1).putInt(i2)
+  @inline def putVec3i( buffer:ByteBuffer, v:Vec3i ):Unit = putVec3f(buffer, v.x, v.y, v.z)
+  @inline def putVec3i( buffer:ByteBuffer, i1:Int, i2:Int, i3:Int ):Unit = buffer.putInt(i1).putInt(i2).putInt(i3)
+  @inline def putVec4i( buffer:ByteBuffer, v:Vec4i ):Unit = putVec4f(buffer, v.x, v.y, v.z, v.w)
+  @inline def putVec4i( buffer:ByteBuffer, i1:Int, i2:Int, i3:Int, i4:Int ): Unit = buffer.putInt(i1).putInt(i2).putInt(i3).putInt(i4)
+  @inline def getVec4i( buffer:ByteBuffer , v:Vec4i ) = {
+    v.x = buffer.getInt()
+    v.y = buffer.getInt()
+    v.z = buffer.getInt()
+    v.w = buffer.getInt()
+    v
+  }
+  @inline def getVec3i( buffer:ByteBuffer , v:Vec3i ) = {
+    v.x = buffer.getInt()
+    v.y = buffer.getInt()
+    v.z = buffer.getInt()
+    v
+  }
+  @inline def getVec2i( buffer:ByteBuffer , v:Vec2i ) = {
+    v.x = buffer.getInt()
+    v.y = buffer.getInt()
+    v
   }
 
-  def putVec2f( buffer:ByteBuffer, v:Vec2f ) {
-    putVec2f(buffer, v.x, v.y)
-  }
+  @inline def byte(b:Boolean):Byte = if(b) 1 else 0
 
-  def putVec2f( buffer:ByteBuffer, f1:Float, f2:Float ) {
-    buffer.putFloat(f1).putFloat(f2)
-  }
 
-  def putVec3f( buffer:FloatBuffer, v:Vec3f ) {
-    putVec3f(buffer, v.x, v.y, v.z)
+  @inline def putVec2b( buffer:ByteBuffer, v:Vec2b ):Unit = putVec2b(buffer, v.x, v.y)
+  @inline def putVec2b( buffer:ByteBuffer, i1:Boolean, i2:Boolean ):Unit = buffer.put(byte(i1)).put(byte(i2))
+  @inline def putVec3b( buffer:ByteBuffer, v:Vec3b ):Unit = putVec3b(buffer, v.x, v.y, v.z)
+  @inline def putVec3b( buffer:ByteBuffer, i1:Boolean, i2:Boolean, i3:Boolean ):Unit = buffer.put(byte(i1)).put(byte(i2)).put(byte(i3))
+  @inline def putVec4b( buffer:ByteBuffer, v:Vec4b ):Unit = putVec4b(buffer, v.x, v.y, v.z, v.w)
+  @inline def putVec4b( buffer:ByteBuffer, i1:Boolean, i2:Boolean, i3:Boolean, i4:Boolean ): Unit = buffer.put(byte(i1)).put(byte(i2)).put(byte(i3)).put(byte(i4))
+  @inline def getVec4b( buffer:ByteBuffer , v:Vec4b ) = {
+    v.x = buffer.get() != 0
+    v.y = buffer.get() != 0
+    v.z = buffer.get() != 0
+    v.w = buffer.get() != 0
+    v
   }
-
-  def putVec3f( buffer:FloatBuffer, f1:Float, f2:Float, f3:Float ) {
-    buffer.put(f1).put(f2).put(f3)
+  @inline def getVec3b( buffer:ByteBuffer , v:Vec3b ) = {
+    v.x = buffer.get() != 0
+    v.y = buffer.get() != 0
+    v.z = buffer.get() != 0
+    v
   }
-
-  def putVec3f( buffer:ByteBuffer, v:Vec3f ) {
-    putVec3f(buffer, v.x, v.y, v.z)
-  }
-
-  def putVec3f( buffer:ByteBuffer, f1:Float, f2:Float, f3:Float ) {
-    buffer.putFloat(f1).putFloat(f2).putFloat(f3)
-  }
-
-  def putVec4f( buffer:FloatBuffer, v:Vec4f ) {
-    putVec4f(buffer, v.x, v.y, v.z, v.w)
-  }
-
-  def putVec4f( buffer:FloatBuffer, f1:Float, f2:Float, f3:Float, f4:Float ) {
-    buffer.put(f1).put(f2).put(f3).put(f4)
-  }
-
-  def putVec4f( buffer:ByteBuffer, v:Vec4f ) {
-    putVec4f(buffer, v.x, v.y, v.z, v.w)
-  }
-
-  def putVec4f( buffer:ByteBuffer, f1:Float, f2:Float, f3:Float, f4:Float ) {
-    buffer.putFloat(f1).putFloat(f2).putFloat(f3).putFloat(f4)
+  @inline def getVec2b( buffer:ByteBuffer , v:Vec2b ) = {
+    v.x = buffer.get() != 0
+    v.y = buffer.get() != 0
+    v
   }
 
   def putMat4f( buffer:ByteBuffer, m:ReadMat4f ) {
