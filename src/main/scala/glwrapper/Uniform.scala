@@ -31,8 +31,6 @@ class UniformConfig(
  */
 
 object Uniform {
-  var currentTextureUnit = GL_TEXTURE1
-  val nextTextureUnit: () => Int = () => {currentTextureUnit += 1; currentTextureUnit-1}
 
   def apply(program:Program, binding:Binding, name:String, location:Int, ttype:Int, size:Int) : Uniform[_] = {
     val config = new UniformConfig(
@@ -45,12 +43,12 @@ object Uniform {
       )
 
       ttype match {
-        case GL_SAMPLER_2D_RECT => new UniformSampler2DRect(nextTextureUnit(), config)
-        case GL_SAMPLER_1D => new UniformSampler1D(nextTextureUnit(), config)
-        case GL_SAMPLER_1D_ARRAY => new UniformSampler1DArray(nextTextureUnit(), config)
-        case GL_SAMPLER_2D => new UniformSampler2D(nextTextureUnit(), config)
-        case GL_SAMPLER_2D_ARRAY => new UniformSampler2DArray(nextTextureUnit(), config)
-        case GL_SAMPLER_CUBE => new UniformSamplerCube(nextTextureUnit(), config)
+        case GL_SAMPLER_2D_RECT => new UniformSampler2DRect(config)
+        case GL_SAMPLER_1D => new UniformSampler1D(config)
+        case GL_SAMPLER_1D_ARRAY => new UniformSampler1DArray(config)
+        case GL_SAMPLER_2D => new UniformSampler2D(config)
+        case GL_SAMPLER_2D_ARRAY => new UniformSampler2DArray(config)
+        case GL_SAMPLER_CUBE => new UniformSamplerCube(config)
         case GL_FLOAT => new UniformFloat(config)
         case GL_FLOAT_VEC2 => new UniformVec2f(config)
         case GL_FLOAT_VEC3 => new UniformVec3f(config)
@@ -274,15 +272,12 @@ class UniformVec4f(config:UniformConfig) extends Uniform[ReadVec4f](config) {
   }
 }
 
-abstract class UniformSampler[T <: Texture](config:UniformConfig) extends Uniform[T](config) {
-  val activeTexture:Int
-  binding.changedUniforms.enqueue(this)
+abstract class UniformSampler[T <: Texture](config:UniformConfig) extends Uniform[ActiveTexture[T]](config) {
+  var activeTexture:Int = 0
 
-  def := (v:T) {
-    val outer = glGetInteger(GL_ACTIVE_TEXTURE)
-    glActiveTexture(activeTexture)
-    v.bind()
-    glActiveTexture(outer)
+  def := (v:ActiveTexture[T]) {
+    activeTexture = v.id
+    binding.changedUniforms.enqueue(this)
   }
 
   def writeData() {
@@ -293,13 +288,13 @@ abstract class UniformSampler[T <: Texture](config:UniformConfig) extends Unifor
   def get = ???
 }
 
-class UniformSampler1D(val activeTexture:Int, config:UniformConfig) extends UniformSampler[Texture1D](config)
-class UniformSampler1DArray(val activeTexture:Int, config:UniformConfig) extends UniformSampler[Texture1DArray](config)
-class UniformSampler2D(val activeTexture:Int, config:UniformConfig) extends UniformSampler[Texture2D](config)
-class UniformSampler2DArray(val activeTexture:Int, config:UniformConfig) extends UniformSampler[Texture2DArray](config)
-class UniformSampler3D(val activeTexture:Int, config:UniformConfig) extends UniformSampler[Texture3D](config)
-class UniformSamplerCube(val activeTexture:Int, config:UniformConfig) extends UniformSampler[TextureCube](config)
-class UniformSampler2DRect(val activeTexture:Int, config:UniformConfig) extends UniformSampler[TextureRectangle](config)
+class UniformSampler1D(config:UniformConfig) extends UniformSampler[Texture1D](config)
+class UniformSampler1DArray(config:UniformConfig) extends UniformSampler[Texture1DArray](config)
+class UniformSampler2D(config:UniformConfig) extends UniformSampler[Texture2D](config)
+class UniformSampler2DArray(config:UniformConfig) extends UniformSampler[Texture2DArray](config)
+class UniformSampler3D(config:UniformConfig) extends UniformSampler[Texture3D](config)
+class UniformSamplerCube(config:UniformConfig) extends UniformSampler[TextureCube](config)
+class UniformSampler2DRect(config:UniformConfig) extends UniformSampler[TextureRectangle](config)
 
 class UniformMat4f(config:UniformConfig) extends Uniform[ReadMat4f](config) {
   val buffer = BufferUtils.createFloatBuffer(16)
