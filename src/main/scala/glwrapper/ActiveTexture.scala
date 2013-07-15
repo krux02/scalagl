@@ -13,16 +13,26 @@ import GL20._
 
 object ActiveTexture {
   val MaxCombinedTextureImageUnits = glGetInteger( GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS )
-}
+  var textureCounter = GL_TEXTURE1
 
-class ActiveTexture(val id:Int) {
-  require( GL_TEXTURE0 <= id && id < GL_TEXTURE0 + ActiveTexture.MaxCombinedTextureImageUnits )
-
-  def bind[U](block: => U):U = {
-    val outer = glGetInteger(GL_ACTIVE_TEXTURE)
-    glActiveTexture(id)
-    val v = block
-    glActiveTexture(outer)
-    v
+  def create[T <: Texture]( texture:T )( params: T#Parameter => Unit ) = {
+    val at = new ActiveTexture[T](textureCounter)
+    at.setTexture(texture, params)
+    textureCounter += 1
+    at
   }
 }
+
+class ActiveTexture[T <: Texture](val id:Int) {
+  require( GL_TEXTURE0 <= id && id < GL_TEXTURE0 + ActiveTexture.MaxCombinedTextureImageUnits )
+
+  def setTexture( texture:T, params: T#Parameter => Unit ) {
+    val outer = glGetInteger(GL_ACTIVE_TEXTURE)
+    glActiveTexture(id)
+    texture.bind()
+    params( texture.parameter )
+    glActiveTexture(outer)
+  }
+}
+
+

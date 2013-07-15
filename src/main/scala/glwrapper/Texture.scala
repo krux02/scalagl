@@ -224,7 +224,7 @@ abstract class Texture extends GlObject {
     this
   }
 
-  def parameter = new {
+  val parameter = new {
     def minFilter = new {
       def nearest() = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
       def linear()  = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
@@ -289,6 +289,8 @@ abstract class Texture extends GlObject {
         glTexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE)
 
   }
+
+  type Parameter = parameter.type
 }
 
 class Texture1D extends Texture {
