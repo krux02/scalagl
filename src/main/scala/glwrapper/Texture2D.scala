@@ -3,13 +3,18 @@ package glwrapper
 import java.nio.ByteBuffer
 
 import org.lwjgl.opengl._
-import GL11._
+import org.lwjgl.opengl.GL11._
 import GL12._
 import GL13._
+import GL14._
+import GL15._
+import GL20._
+import GL21._
 import GL30._
 import GL31._
 import org.lwjgl.BufferUtils
 import glwrapper.util.sharedByteBuffer
+import simplex3d.math.floatx.Vec4f
 
 object Texture {
 
@@ -18,10 +23,10 @@ object Texture {
   val DataType = GL_UNSIGNED_BYTE
 
   private def defaultParameters(texture:Texture) = {
-    texture.parameter(GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE)
-    texture.parameter(GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE)
-    texture.parameter(GL_TEXTURE_MAG_FILTER,GL_LINEAR)
-    texture.parameter(GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR)
+    texture.parameter.wrapS.clampToEdge()
+    texture.parameter.wrapT.clampToEdge()
+    texture.parameter.magFilter.linear()
+    texture.parameter.minFilter.linearMipmapLinear()
   }
 
   def create1DArray(surfaces:Array[Surface]):Texture1DArray = {
@@ -60,9 +65,13 @@ object Texture {
     val texture = (new Texture1D).create()
 
     texture.bind {
-      texture.parameter(GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE)
-      texture.parameter(GL_TEXTURE_MAG_FILTER,GL_LINEAR)
-      texture.parameter(GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR)
+      val param = texture.parameter
+      import param._
+      wrapS.clampToEdge()
+      magFilter.linear()
+      wrapS.clampToEdge()
+      magFilter.linear()
+      minFilter.linearMipmapLinear()
 
       glTexImage1D(texture.target, 0, InternalFormat, width, 0, Format, DataType, pixels)
 
@@ -121,10 +130,14 @@ object Texture {
     val texture = (new TextureRectangle).create()
 
     texture.bind {
-      texture.parameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
-      texture.parameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
-      texture.parameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-      texture.parameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+      val param = texture.parameter
+      import param._
+
+      wrapS.clampToEdge()
+      wrapT.clampToEdge()
+      magFilter.linear()
+      minFilter.linear()
+
       glTexImage2D(GL_TEXTURE_RECTANGLE, 0, InternalFormat, width, height, 0, Format, DataType, pixels)
     }
     texture
@@ -170,7 +183,7 @@ object Texture {
 
     texture.bind {
       defaultParameters(texture)
-      texture.parameter(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE)
+      texture.parameter.wrapR.clampToEdge()
 
       glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, InternalFormat, width, width, 0, Format, DataType, positiveX)
       glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, InternalFormat, width, width, 0, Format, DataType, negativeX)
@@ -211,12 +224,72 @@ abstract class Texture extends GlObject {
     this
   }
 
-  def parameter(name:Int,param:Int):this.type = {
-    glTexParameteri(target, name, param)
-    this
+  def parameter = new {
+    def minFilter = new {
+      def nearest() = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
+      def linear()  = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+      def nearestMipmapNearest() = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST)
+      def linearMipmapNearest() = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST)
+      def nearestMipmapLinear() = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR)
+      def linearMipmapLinear() = glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+    }
+    def magFilter = new {
+      def nearest() = glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
+      def linear()  = glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    }
+    def minLod(lod:Float) = glTexParameterf(target, GL_TEXTURE_MIN_LOD, lod)
+    def maxLod(lod:Float) = glTexParameterf(target, GL_TEXTURE_MAX_LOD, lod)
+    def baseLevel(level:Int) = glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, level)
+    def maxLevel(level:Int) = glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, level)
+
+    class Wrap(component:Int) {
+      def clamp() = glTexParameteri(target, component, GL_CLAMP)
+      def clampToBorder() = glTexParameteri(target, component, GL_CLAMP_TO_BORDER)
+      def clampToEdge()   = glTexParameteri(target, component, GL_CLAMP_TO_EDGE)
+      def repeat() = glTexParameteri(target, component, GL_REPEAT)
+      def mirroredRepeat() = glTexParameteri(target, component, GL_MIRRORED_REPEAT)
+    }
+
+    def wrapS = new Wrap(GL_TEXTURE_WRAP_S)
+    def wrapT = new Wrap(GL_TEXTURE_WRAP_T)
+    def wrapR = new Wrap(GL_TEXTURE_WRAP_R)
+
+    def borderColor(r:Float,g:Float,b:Float,a:Float) = {
+      val buffer = util.sharedFloatBuffer(4)
+      buffer.put(0,r).put(1,g).put(2,b).put(3,a)
+      glTexParameter(target, GL_TEXTURE_BORDER_COLOR, buffer)
+    }
+    def borderColor(color:Vec4f):Unit = borderColor(color.r, color.g, color.b, color.a)
+    @deprecated("","") def priority(prio:Float) = glTexParameterf(target, GL_TEXTURE_PRIORITY, prio)
+    def compareMode = new {
+      def compareRtoTexture() = glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE)
+      def none() = glTexParameteri(target, GL_TEXTURE_COMPARE_MODE, GL_NONE)
+    }
+    def compareFunc = new {
+      def lequal() = glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL)
+      def gequal() = glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_GEQUAL)
+      def less()   = glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_LESS)
+      def greater()= glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_GREATER)
+      def equal()  = glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_EQUAL)
+      def notqual()= glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_NOTEQUAL)
+      def always() = glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_ALWAYS)
+      def never()  = glTexParameteri(target, GL_TEXTURE_COMPARE_FUNC, GL_NEVER)
+    }
+
+    @deprecated("","") def depthTextureMode = new {
+      def luminance() =  glTexParameteri(target, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE)
+      def intensity() =  glTexParameteri(target, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY)
+      def alpha()     =  glTexParameteri(target, GL_DEPTH_TEXTURE_MODE, GL_ALPHA)
+    }
+
+    @deprecated("","") def generateMipmap(value:Boolean) =
+      if(value)
+        glTexParameteri(target, GL_GENERATE_MIPMAP, GL_TRUE)
+      else
+        glTexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE)
+
   }
 }
-
 
 class Texture1D extends Texture {
   def target = GL_TEXTURE_1D
