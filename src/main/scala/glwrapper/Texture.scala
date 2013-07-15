@@ -22,11 +22,35 @@ object Texture {
   val Format = GL_BGRA
   val DataType = GL_UNSIGNED_BYTE
 
-  private def defaultParameters(texture:Texture) = {
-    texture.parameter.wrapS.clampToEdge()
-    texture.parameter.wrapT.clampToEdge()
-    texture.parameter.magFilter.linear()
-    texture.parameter.minFilter.linearMipmapLinear()
+  def default2DParameters(parameter:Texture#Parameter) = {
+    import parameter._
+    wrapS.clampToEdge()
+    wrapT.clampToEdge()
+    magFilter.linear()
+    minFilter.linearMipmapLinear()
+  }
+
+  def default1DParameters(parameter:Texture#Parameter) = {
+    import parameter._
+    wrapS.clampToEdge()
+    magFilter.linear()
+    minFilter.linearMipmapLinear()
+  }
+
+  def defaultRectParameters(parameter:Texture#Parameter) = {
+    import parameter._
+    wrapS.clampToEdge()
+    wrapT.clampToEdge()
+    magFilter.linear()
+    minFilter.linear()
+  }
+
+  def defaultCubeParameters(parameter:Texture#Parameter) = {
+    wrapS.clampToEdge()
+    wrapT.clampToEdge()
+    wrapR.clampToEdge()
+    magFilter.linear()
+    minFilter.linearMipmapLinear()
   }
 
   def create1DArray(surfaces:Array[Surface]):Texture1DArray = {
@@ -43,12 +67,9 @@ object Texture {
     require( ((width - 1) & width) == 0 )
 
     val texture = (new Texture1DArray).create()
-
-    texture.bind {
-      defaultParameters(texture)
-      glTexImage2D(GL_TEXTURE_1D_ARRAY, 0, InternalFormat, width, levelCount, 0, Format, DataType, pixels)
-      texture.generateMipmap()
-    }
+    texture.bind()
+    glTexImage2D(GL_TEXTURE_1D_ARRAY, 0, InternalFormat, width, levelCount, 0, Format, DataType, pixels)
+    texture
   }
 
   def create1D(surface:Surface):Texture1D = {
@@ -61,22 +82,9 @@ object Texture {
 
   def create1D(width:Int, pixels:ByteBuffer):Texture1D = {
     require( ((width - 1) & width) == 0 )
-
     val texture = (new Texture1D).create()
-
-    texture.bind {
-      val param = texture.parameter
-      import param._
-      wrapS.clampToEdge()
-      magFilter.linear()
-      wrapS.clampToEdge()
-      magFilter.linear()
-      minFilter.linearMipmapLinear()
-
-      glTexImage1D(texture.target, 0, InternalFormat, width, 0, Format, DataType, pixels)
-
-      texture.generateMipmap()
-    }
+    texture.bind()
+    glTexImage1D(texture.target, 0, InternalFormat, width, 0, Format, DataType, pixels)
   }
 
   def create2DArray(surfaces:Array[Surface]):Texture2DArray = {
@@ -87,22 +95,16 @@ object Texture {
     for( s <- surfaces ){
       require(s.width == width && s.height == height)
     }
-
     val data = sharedByteBuffer(width*height*4*surfaces.length)
     (data.asIntBuffer /: surfaces)( _ put _.data )
-
     create2DArray(width, height, surfaces.length, data)
   }
 
   def create2DArray(width:Int, height:Int, levelCount:Int, pixels:ByteBuffer):Texture2DArray = {
-
     val texture = (new Texture2DArray).create()
-
-    texture.bind {
-      defaultParameters(texture)
-      glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, InternalFormat, width, height, levelCount, 0, Format, DataType, pixels)
-      texture.generateMipmap()
-    }
+    texture.bind()
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, InternalFormat, width, height, levelCount, 0, Format, DataType, pixels)
+    texture
   }
 
   def create2D(surface:Surface):Texture2D = {
@@ -113,33 +115,20 @@ object Texture {
     create2D(width,height,data)
   }
 
-  def create2D(width:Int, height:Int, pixels:ByteBuffer) = {
+  def create2D(width:Int, height:Int, pixels:ByteBuffer):Texture2D = {
     require( ((width - 1) & width) == 0 )
     require( ((height - 1) & height) == 0 )
 
     val texture = (new Texture2D).create()
-
-    texture.bind {
-      defaultParameters(texture)
-      glTexImage2D(texture.target, 0, InternalFormat, width, height, 0, Format, DataType, pixels)
-      texture.generateMipmap()
-    }
+    texture.bind()
+    glTexImage2D(texture.target, 0, InternalFormat, width, height, 0, Format, DataType, pixels)
+    texture
   }
 
   def createRectangle(width:Int, height:Int, pixels:ByteBuffer) = {
     val texture = (new TextureRectangle).create()
-
-    texture.bind {
-      val param = texture.parameter
-      import param._
-
-      wrapS.clampToEdge()
-      wrapT.clampToEdge()
-      magFilter.linear()
-      minFilter.linear()
-
-      glTexImage2D(GL_TEXTURE_RECTANGLE, 0, InternalFormat, width, height, 0, Format, DataType, pixels)
-    }
+    texture.bind()
+    glTexImage2D(GL_TEXTURE_RECTANGLE, 0, InternalFormat, width, height, 0, Format, DataType, pixels)
     texture
   }
 
@@ -182,16 +171,12 @@ object Texture {
     val texture = (new TextureCube).create()
 
     texture.bind {
-      defaultParameters(texture)
-      texture.parameter.wrapR.clampToEdge()
-
       glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, InternalFormat, width, width, 0, Format, DataType, positiveX)
       glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, InternalFormat, width, width, 0, Format, DataType, negativeX)
       glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, InternalFormat, width, width, 0, Format, DataType, positiveY)
       glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, InternalFormat, width, width, 0, Format, DataType, negativeY)
       glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, InternalFormat, width, width, 0, Format, DataType, positiveZ)
       glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, 0, InternalFormat, width, width, 0, Format, DataType, negativeZ)
-
       texture.generateMipmap()
     }
   }

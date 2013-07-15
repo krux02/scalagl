@@ -23,10 +23,14 @@ object ActiveTexture {
   }
 }
 
+
+
 class ActiveTexture[T <: Texture](val id:Int) {
   require( GL_TEXTURE0 <= id && id < GL_TEXTURE0 + ActiveTexture.MaxCombinedTextureImageUnits )
 
-  def setTexture( texture:T, params: T#Parameter => Unit ) {
+
+
+  def setTexture( texture:T ) {
     val outer = glGetInteger(GL_ACTIVE_TEXTURE)
     glActiveTexture(id)
     texture.bind()
