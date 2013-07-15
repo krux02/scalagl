@@ -227,13 +227,22 @@ package object util {
     Mat4f(v1,v2,v3,v4)
   }
 
-  def projectionF(n:Float,f:Float,v:Float):Mat4f = {
-    val n = 0.05f     // near
-    val f = 1000.0f   // far
+  def simpleProjectionF(n:Float = 0.05f,f:Float = 1000f, v:Float = 4.0f / 3.0f ):Mat4f = {
     val l = - v * n  // left
     val r =   v * n  // right
     val t =  n       // top
     val b = -n       // bottom
+    projectionF(l,r,b,t,n,f)
+  }
+
+  def stereoPorjectionF(n:Float = 0.05f,f:Float = 1000f, v:Float = 4.0f / 3.0f, eyeDist:Float = 0.06f, screenDist:Float = 1.0f, leftEye:Boolean):Mat4f = {
+    val sgn = if(leftEye) -1 else 1
+    val L = -v * screenDist - sgn * eyeDist/2
+    val R =  v * screenDist - sgn * eyeDist/2
+    val l = L * n / screenDist
+    val r = R * n / screenDist
+    val b = -n
+    val t = n
 
     projectionF(l,r,b,t,n,f)
   }

@@ -14,7 +14,6 @@ import simplex3d.math.double._
  * To change this template use File | Settings | File Templates.
  */
 class TextureLoader {
-
   private def createBuffer( pixels:Array[Byte], hasAlphaChannel:Boolean ) = {
     val buffer = BufferUtils.createByteBuffer(pixels.length)
     if( hasAlphaChannel ) {
@@ -31,34 +30,6 @@ class TextureLoader {
     }
     buffer.rewind()
     buffer
-  }
-
-  private def makeIntArray( pixels:Array[Byte], hasAlphaChannel:Boolean ) = {
-    val bpp = if( hasAlphaChannel ) 4 else 3
-    val array = new Array[Int](pixels.length / bpp)
-    if( hasAlphaChannel ) {
-      var i = 0
-      for( Array(a,b,g,r) <- pixels.grouped(4) ) {
-        array(i) =
-        (b & 0xff) << 0 |
-        (g & 0xff) << 8  |
-        (r & 0xff) << 16 |
-        (a & 0xff) << 24
-        i += 1
-      }
-    }
-    else {
-      var i = 0
-      for( Array(b,g,r) <- pixels.grouped(3) ) {
-        array(i) =
-          (b & 0xff) << 0 |
-            (g & 0xff) << 8  |
-            (r & 0xff) << 16 |
-            (0xff) << 24
-        i += 1
-      }
-    }
-    array
   }
 
   case class QuadTexCoords(v1:Vec2, v2:Vec2, v3:Vec2, v4:Vec2)
@@ -80,9 +51,7 @@ class TextureLoader {
       if(height > maxHeight)
         maxHeight = height
 
-      val hasAlphaChannel = image.getAlphaRaster != null
-      val pixels = makeIntArray(image.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData, hasAlphaChannel)
-
+      val pixels = image.getRGB(0,0,width, height, null, 0, width)
       new Surface( width, height, pixels )
     }
 
@@ -114,9 +83,9 @@ class TextureLoader {
 
   def readImageRaster( filename:String ) : Surface = {
     val image = readImage(filename)
-    val data = image.getRaster.getDataBuffer.asInstanceOf[DataBufferByte].getData
-    val pixels = makeIntArray(data, image.getAlphaRaster != null)
-    new Surface(image.getWidth, image.getHeight, pixels)
+    import image.{getWidth => w, getHeight => h}
+    val pixels = image.getRGB(0,0,w, h, null, 0, w)
+    new Surface(w, h, pixels)
   }
 
   def loadAsSkybox(filename:String, fileEnding:String):TextureCube = {
