@@ -176,6 +176,30 @@ package object util {
     buffer.putFloat(m.m33)
   }
 
+  def getMat4f( buffer:ByteBuffer, m:Mat4f) = {
+    m.m00 = buffer.getFloat
+    m.m01 = buffer.getFloat
+    m.m02 = buffer.getFloat
+    m.m03 = buffer.getFloat
+
+    m.m10 = buffer.getFloat
+    m.m11 = buffer.getFloat
+    m.m12 = buffer.getFloat
+    m.m13 = buffer.getFloat
+
+    m.m20 = buffer.getFloat
+    m.m21 = buffer.getFloat
+    m.m22 = buffer.getFloat
+    m.m23 = buffer.getFloat
+
+    m.m30 = buffer.getFloat
+    m.m31 = buffer.getFloat
+    m.m32 = buffer.getFloat
+    m.m33 = buffer.getFloat
+
+    m
+  }
+
   def putMat4f( buffer:FloatBuffer, m:ReadMat4f ) {
     buffer.put(m.m00)
     buffer.put(m.m01)
@@ -247,40 +271,6 @@ package object util {
     projectionF(l,r,b,t,n,f)
   }
 
-  import scala.reflect.runtime.universe._
-
-  def sizeOf[T : TypeTag](x:T):Int = sizeOf[T]
-
-  def sizeOf[T : TypeTag] = {
-    val t = typeOf[T]
-         if( t =:= typeOf[Int]   || t =:= typeOf[Float]  ) 4
-    else if( t =:= typeOf[Long]  || t =:= typeOf[Double] ) 8
-    else if( t =:= typeOf[Short] || t =:= typeOf[Char]   ) 2
-    else if( t =:= typeOf[Byte] ) 1
-    else if( t =:= typeOf[Vec4d] ) 4*8
-    else if( t =:= typeOf[Vec3d] ) 3*8
-    else if( t =:= typeOf[Vec2d] ) 2*8
-    else if( t =:= typeOf[Mat4d] ) 4*4*8
-    else if( t =:= typeOf[Mat3d] ) 3*3*8
-    else if( t =:= typeOf[Mat2d] ) 2*2*8
-    else if( t =:= typeOf[Vec4f] ) 4*4
-    else if( t =:= typeOf[Vec3f] ) 3*4
-    else if( t =:= typeOf[Vec2f] ) 2*4
-    else if( t =:= typeOf[Mat4f] ) 4*4*4
-    else if( t =:= typeOf[Mat3f] ) 3*3*4
-    else if( t =:= typeOf[Mat2f] ) 2*2*4
-    else if( t =:= typeOf[ReadVec4d] ) 4*8
-    else if( t =:= typeOf[ReadVec3d] ) 3*8
-    else if( t =:= typeOf[ReadVec2d] ) 2*8
-    else if( t =:= typeOf[ReadMat4d] ) 4*4*8
-    else if( t =:= typeOf[ReadMat3d] ) 3*3*8
-    else if( t =:= typeOf[ReadMat2d] ) 2*2*8
-    else if( t =:= typeOf[ReadVec4f] ) 4*4
-    else if( t =:= typeOf[ReadVec3f] ) 3*4
-    else if( t =:= typeOf[ReadVec2f] ) 2*4
-    else if( t =:= typeOf[ReadMat4f] ) 4*4*4
-    else if( t =:= typeOf[ReadMat3f] ) 3*3*4
-    else if( t =:= typeOf[ReadMat2f] ) 2*2*4
-    else ???
-  }
+  def sizeOf[T](x:T)(implicit sd:ShaderData[T]):Int = sizeOf[T](sd)
+  def sizeOf[T](implicit sd:ShaderData[T]) = sd.byteStride
 }
