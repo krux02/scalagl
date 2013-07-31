@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL42._
 import org.lwjgl.opengl.GL43._
 
 import java.nio.{IntBuffer, FloatBuffer, ByteBuffer}
+import org.lwjgl.BufferUtils
 
 /**
  * User: arne
@@ -66,6 +67,11 @@ abstract class GlBuffer() extends GlObject {
     require( buffer.position() == 0, "forgot to flip the buffer?" )
     glGetBufferSubData(target, offset, buffer)
     buffer
+  }
+
+  def getData:ByteBuffer = {
+    val data = BufferUtils.createByteBuffer( size )
+    getData(data)
   }
 
   def size = glGetBufferParameteri(target, GL_BUFFER_SIZE)

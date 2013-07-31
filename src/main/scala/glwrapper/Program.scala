@@ -38,8 +38,6 @@ object Program {
   }
 
   def create(name:String, vertexShaders: Seq[VertexShader], fragmentShaders: Seq[FragmentShader]):Program = {
-
-
     val shaderList = vertexShaders ++ fragmentShaders
 
     val program = new Program(name)
@@ -49,17 +47,7 @@ object Program {
       program attach shader
     }
 
-    /*
-    if( fragmentShaders.isEmpty ){
-      val attributes = Array[CharSequence]("gl_Position")
-      program.transformFeedbackVaryings( attributes )
-    }
-    */
-
     program.link()
-
-//    for(shader <- shaderList)
-//      program detach shader x
 
     program
   }
@@ -98,7 +86,6 @@ object Program {
     GL_INT_SAMPLER_BUFFER,
     GL_INT_SAMPLER_2D_RECT
   )
-
 
   import GL41._
   import GL42._

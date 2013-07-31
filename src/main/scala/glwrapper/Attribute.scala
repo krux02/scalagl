@@ -6,9 +6,11 @@ package glwrapper
  * Time: 20:45
  */
 
-import org.lwjgl.opengl.GL12._
 import org.lwjgl.opengl.GL11._
+import org.lwjgl.opengl.GL12._
+import org.lwjgl.opengl.GL15._
 import org.lwjgl.opengl.GL20._
+import org.lwjgl.opengl.GL30._
 
 import simplex3d.math.floatx._
 import java.nio.ByteBuffer
@@ -76,6 +78,16 @@ object Attribute {
         throw new NotImplementedError("currently not supported attribute type: "+Program.shaderTypeString(ttype) )
     }
   }
+
+  def type2String(tt:Int) = tt match {
+    case GL_FLOAT => "GL_FLOAT"
+    case GL_DOUBLE => "GL_DOUBLE"
+    case GL_UNSIGNED_BYTE => "GL_UNSIGNED_BYTE"
+    case GL_SHORT => "GL_SHORT"
+    case GL_UNSIGNED_SHORT => "GL_UNSIGNED_SHORT"
+    case GL_INT => "GL_INT"
+    case GL_UNSIGNED_INT => "GL_UNSIGNED_INT"
+  }
 }
 
 abstract class Attribute[T](val size:Int, val glType:Int)  extends AddString {
@@ -92,7 +104,7 @@ abstract class Attribute[T](val size:Int, val glType:Int)  extends AddString {
   def enabled_=(b:Boolean) { if(b) enable() else disable() }
 
   def enabled = {
-    val buffer = sharedIntBuffer(1)
+    val buffer = sharedIntBuffer(4)
     glGetVertexAttrib(location, GL_VERTEX_ATTRIB_ARRAY_ENABLED, buffer)
     buffer.get(0) == GL_TRUE
   }
@@ -118,13 +130,23 @@ abstract class Attribute[T](val size:Int, val glType:Int)  extends AddString {
     }
   }
 
+
   def setPointer() {
     val bb = bufferBinding
     glVertexAttribPointer(location, bb.size, bb.glType, bb.normalized, bb.stride, bb.offset)
   }
 
+  def inShaderString = {
+    s"layout(location = $location) attribute ${Program.shaderTypeString(glType)} $name ${if(size > 1) (s"[$size]") else ""}"
+  }
+
   override def addString(sb:StringBuilder) = {
-    sb append s"layout(location = $location) attribute ${Program.shaderTypeString(glType)} $name ${if(size > 1) (s"[$size]") else ""}"
+    sb ++= inShaderString
+    sb
+  }
+
+  def boundString = {
+    s"enabled: $enabled, divisor: $divisor, bufferBinding: $glBufferBinding, components: $components, componentType: ${Attribute.type2String(componentType)}, normalized: $normalized, stride: $glStride, isInt: $integer"
   }
 
   def divisor:Int = {
@@ -137,10 +159,46 @@ abstract class Attribute[T](val size:Int, val glType:Int)  extends AddString {
     glVertexAttribDivisorARB(location, i)
   }
 
+  def glBufferBinding = {
+    val buffer = sharedIntBuffer(4)
+    glGetVertexAttrib(location, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, buffer)
+    buffer.get(0)
+  }
+
+  def glStride = {
+    val buffer = sharedIntBuffer(4)
+    glGetVertexAttrib(location, GL_VERTEX_ATTRIB_ARRAY_STRIDE, buffer)
+    buffer.get(0)
+  }
+
+  def components = {
+    val buffer = sharedIntBuffer(4)
+    glGetVertexAttrib(location, GL_VERTEX_ATTRIB_ARRAY_SIZE, buffer)
+    buffer.get(0)
+  }
+
+  /// Possible values are GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT, GL_UNSIGNED_SHORT, GL_INT, GL_UNSIGNED_INT, GL_FLOAT, and GL_DOUBLE. The initial value is GL_FLOAT.
+  def componentType = {
+    val buffer = sharedIntBuffer(4)
+    glGetVertexAttrib(location, GL_VERTEX_ATTRIB_ARRAY_TYPE, buffer)
+    buffer.get(0)
+  }
+
+  def normalized = {
+    val buffer = sharedIntBuffer(4)
+    glGetVertexAttrib(location, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, buffer)
+    buffer.get(0) == GL_TRUE
+  }
+
+  def integer = {
+    val buffer = sharedIntBuffer(4)
+    glGetVertexAttrib(location, GL_VERTEX_ATTRIB_ARRAY_INTEGER, buffer)
+    buffer.get(0) == GL_TRUE
+  }
 }
 
 class AttributeFake[T](val program:Program, val binding:Binding, val name:CharSequence) extends Attribute[T](1, -1) {
-  println(this)
+  println(program.name + ":" + this)
 
   val location:Int = -1
   val bufferBinding:BufferBinding = null
