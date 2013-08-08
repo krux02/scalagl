@@ -221,8 +221,9 @@ class Program(val name:String) { program =>
 
     new Binding(program) { binding =>
       val attributes =
-        for( location <- 0 until numAttributes ) yield {
-          val name = glGetActiveAttrib(id, location, 1000, sizetypeBuffer)
+        for( i <- 0 until numAttributes ) yield {
+          val name = glGetActiveAttrib(id, i, 1000, sizetypeBuffer)
+          val location = glGetAttribLocation(id, name)
           val size = sizetypeBuffer.get(0)
           val ttype = sizetypeBuffer.get(1)
           Attribute(program, binding, name, location, size, ttype)
