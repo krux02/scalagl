@@ -1,5 +1,7 @@
 package glwrapper
 
+import org.lwjgl.opengl._
+
 /**
  * User: arne
  * Date: 29.04.13
@@ -99,8 +101,6 @@ object Surface {
   }
 }
 
-
-
 final class Surface(val width:Int, val height:Int, val data:Array[Int] ) {
   require( ((width - 1) & width) == 0 )
   require( ((height - 1) & height) == 0 )
@@ -112,6 +112,14 @@ final class Surface(val width:Int, val height:Int, val data:Array[Int] ) {
 
   def update(x:Int,y:Int, color:Int) {
     data( indexOf(x,y) ) = color
+  }
+
+  def draw() {
+    import GL11._
+    import GL12._
+    val dataBuffer = util.sharedByteBuffer(width*height*util.sizeOf[Int])
+    dataBuffer.asIntBuffer().put(data)
+    glDrawPixels(width,height, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8, dataBuffer)
   }
 
   def checkBounds( rect:Rect ) = {
